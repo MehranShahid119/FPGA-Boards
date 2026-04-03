@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Cheat Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e14;
+    --panel: #0f1520;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --accent4: #ffcc00;
+    --text: #ccd6f6;
+    --muted: #637196;
+    --cmd: #e6f1ff;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 2rem 1.5rem 4rem;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(0,212,255,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 100%, rgba(255,107,53,0.05) 0%, transparent 50%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .badge {
+    display: inline-block;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    margin-top: 0.75rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .card-header {
+    padding: 0.85rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-header .icon { font-size: 1.1rem; }
+
+  .card-header h2 {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .c1 .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .c2 .dot { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .c3 .dot { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+  .c4 .dot { background: var(--accent4); box-shadow: 0 0 8px var(--accent4); }
+  .c5 .dot { background: #c084fc; box-shadow: 0 0 8px #c084fc; }
+  .c6 .dot { background: #f472b6; box-shadow: 0 0 8px #f472b6; }
+  .c7 .dot { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+  .c8 .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  .c1 .card-header { border-bottom-color: rgba(0,212,255,0.2); }
+  .c2 .card-header { border-bottom-color: rgba(255,107,53,0.2); }
+  .c3 .card-header { border-bottom-color: rgba(127,255,107,0.2); }
+  .c4 .card-header { border-bottom-color: rgba(255,204,0,0.2); }
+  .c5 .card-header { border-bottom-color: rgba(192,132,252,0.2); }
+  .c6 .card-header { border-bottom-color: rgba(244,114,182,0.2); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  tr:not(:last-child) td {
+    border-bottom: 1px solid rgba(30,45,69,0.6);
+  }
+
+  tr:hover td { background: rgba(0,212,255,0.03); }
+
+  td {
+    padding: 0.55rem 1.1rem;
+    vertical-align: top;
+    font-size: 0.85rem;
+  }
+
+  td:first-child {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--cmd);
+    white-space: nowrap;
+    width: 50%;
+    padding-right: 0.5rem;
+  }
+
+  .c2 td:first-child { color: #ffaa80; }
+  .c3 td:first-child { color: #b0ffaa; }
+  .c4 td:first-child { color: #ffe980; }
+  .c5 td:first-child { color: #d4aaff; }
+  .c6 td:first-child { color: #ffaacc; }
+  .c7 td:first-child { color: #b0ffaa; }
+
+  td:last-child {
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .sudo-note {
+    background: rgba(255,107,53,0.08);
+    border: 1px solid rgba(255,107,53,0.25);
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    margin: 1.5rem auto;
+    max-width: 1400px;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .sudo-note .icon { font-size: 1.2rem; flex-shrink: 0; }
+  .sudo-note strong { color: var(--accent2); font-family: var(--mono); }
+  .sudo-note p { color: var(--muted); line-height: 1.5; }
+
+  .tip-row td {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    margin: 2rem 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .section-label::before, .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-family: var(--mono);
+  }
+
+  footer span { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">// Pakistan Semiconductor Summit Prep</div>
+  <h1>Linux <span>Cheat Sheet</span></h1>
+  <p class="subtitle">Aapke liye — har zaroori command ek jagah 🚀</p>
+</header>
+
+<div class="sudo-note">
+  <span class="icon">⚡</span>
+  <div>
+    <p><strong>sudo</strong> = Super User Do — Admin ki permission se command chalao. Password maangega — type karo, screen pe kuch nahi dikhega — yeh normal hai! <strong>sudo</strong> sirf trusted commands pe use karo.</p>
+  </div>
+</div>
+
+<div class="section-label">Navigation & Files</div>
+
+<div class="grid">
+
+  <!-- Navigation -->
+  <div class="card c1">
+    <div class="card-header">
+      <span class="icon">🧭</span>
+      <h2>Navigation</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>pwd</td><td>Abhi kahan ho — current folder dikhao</td></tr>
+      <tr><td>ls</td><td>Is folder mein kya hai dikhao</td></tr>
+      <tr><td>ls -la</td><td>Sab files (hidden bhi) detail ke saath</td></tr>
+      <tr><td>cd foldername</td><td>Us folder mein jao</td></tr>
+      <tr><td>cd ..</td><td>Ek folder peeche jao</td></tr>
+      <tr><td>cd ~</td><td>Seedha Home folder mein jao</td></tr>
+      <tr><td>cd /</td><td>Root (sabse upar) mein jao</td></tr>
+      <tr><td>clear</td><td>Terminal saaf karo</td></tr>
+    </table>
+  </div>
+
+  <!-- Files & Folders -->
+  <div class="card c2">
+    <div class="card-header">
+      <span class="icon">📁</span>
+      <h2>Files & Folders</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>touch file.txt</td><td>Nayi khali file banao</td></tr>
+      <tr><td>mkdir myfolder</td><td>Naya folder banao</td></tr>
+      <tr><td>mkdir -p a/b/c</td><td>Nested folders ek saath banao</td></tr>
+      <tr><td>cp file1 file2</td><td>File copy karo</td></tr>
+      <tr><td>cp -r folder1 folder2</td><td>Poora folder copy karo</td></tr>
+      <tr><td>mv file1 file2</td><td>File move ya rename karo</td></tr>
+      <tr><td>rm file.txt</td><td>File delete karo</td></tr>
+      <tr><td>rm -rf folder</td><td>Folder aur sab kuch delete karo ⚠️</td></tr>
+    </table>
+  </div>
+
+  <!-- File Reading -->
+  <div class="card c3">
+    <div class="card-header">
+      <span class="icon">📖</span>
+      <h2>File Padhna</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>cat file.txt</td><td>Poori file terminal mein dikhao</td></tr>
+      <tr><td>less file.txt</td><td>File scroll karke padho (q = exit)</td></tr>
+      <tr><td>head file.txt</td><td>Pehli 10 lines dikhao</td></tr>
+      <tr><td>head -n 20 file</td><td>Pehli 20 lines dikhao</td></tr>
+      <tr><td>tail file.txt</td><td>Aakhri 10 lines dikhao</td></tr>
+      <tr><td>tail -f file.txt</td><td>File live monitor karo (logs ke liye)</td></tr>
+      <tr><td>wc -l file.txt</td><td>File mein kitni lines hain</td></tr>
+      <tr><td>grep "word" file</td><td>File mein koi lafz dhoondo</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<div class="section-label">System & Packages</div>
+
+<div class="grid">
+
+  <!-- apt Package Manager -->
+  <div class="card c4">
+    <div class="card-header">
+      <span class="icon">📦</span>
+      <h2>apt — Package Manager</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>sudo apt update</td><td>Package list refresh karo (pehle yeh karo)</td></tr>
+      <tr><td>sudo apt upgrade</td><td>Sab installed packages update karo</td></tr>
+      <tr><td>sudo apt install git</td><td>Koi package install karo</td></tr>
+      <tr><td>sudo apt install -y git</td><td>Install karo, beech mein yes mat maango</td></tr>
+      <tr><td>sudo apt remove git</td><td>Package remove karo</td></tr>
+      <tr><td>sudo apt autoremove</td><td>Faltu packages hata do</td></tr>
+      <tr><td>apt search git</td><td>Package dhoondo</td></tr>
+      <tr><td>apt show git</td><td>Package ki info dekho</td></tr>
+    </table>
+  </div>
+
+  <!-- System Info -->
+  <div class="card c5">
+    <div class="card-header">
+      <span class="icon">🖥️</span>
+      <h2>System Info</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>uname -a</td><td>Linux version aur system info</td></tr>
+      <tr><td>whoami</td><td>Abhi kaunsa user ho tum</td></tr>
+      <tr><td>df -h</td><td>Hard disk kitni bhari hai</td></tr>
+      <tr><td>free -h</td><td>RAM kitni use ho rahi hai</td></tr>
+      <tr><td>top</td><td>Live CPU/RAM usage (q = exit)</td></tr>
+      <tr><td>htop</td><td>Behtar top — install: sudo apt install htop</td></tr>
+      <tr><td>lscpu</td><td>CPU ki details</td></tr>
+      <tr><td>lsusb</td><td>Connected USB devices</td></tr>
+    </table>
+  </div>
+
+  <!-- Permissions -->
+  <div class="card c6">
+    <div class="card-header">
+      <span class="icon">🔐</span>
+      <h2>Permissions</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>ls -l</td><td>Files ki permissions dekho</td></tr>
+      <tr><td>chmod +x file.sh</td><td>File ko executable banao (run karne yogya)</td></tr>
+      <tr><td>chmod 777 file</td><td>Sabko sab permissions do</td></tr>
+      <tr><td>chmod 644 file</td><td>Owner read/write, baqi sirf read</td></tr>
+      <tr><td>chown user file</td><td>File ka owner badlo</td></tr>
+      <tr><td>sudo chown root file</td><td>Root ko owner banao</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<div class="section-label">Git & RISC-V Work</div>
+
+<div class="grid">
+
+  <!-- Git -->
+  <div class="card c1">
+    <div class="card-header">
+      <span class="icon">🐙</span>
+      <h2>Git — GitHub se kaam</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>git clone URL</td><td>GitHub se repo download karo</td></tr>
+      <tr><td>git status</td><td>Kya kya badla hai dekho</td></tr>
+      <tr><td>git add .</td><td>Sab changes stage karo</td></tr>
+      <tr><td>git commit -m "msg"</td><td>Changes save karo with message</td></tr>
+      <tr><td>git push</td><td>GitHub pe upload karo</td></tr>
+      <tr><td>git pull</td><td>GitHub se latest le aao</td></tr>
+      <tr><td>git log</td><td>Pichli commits ki history</td></tr>
+      <tr><td>git branch</td><td>Branches dekho</td></tr>
+    </table>
+  </div>
+
+  <!-- Processes -->
+  <div class="card c3">
+    <div class="card-header">
+      <span class="icon">⚙️</span>
+      <h2>Processes</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>ps aux</td><td>Sab chal rahe programs dekho</td></tr>
+      <tr><td>kill PID</td><td>Process band karo (PID = number)</td></tr>
+      <tr><td>kill -9 PID</td><td>Force band karo — nahi maanta to yeh</td></tr>
+      <tr><td>Ctrl + C</td><td>Chalta command rokو</td></tr>
+      <tr><td>Ctrl + Z</td><td>Command pause karo</td></tr>
+      <tr><td>bg</td><td>Paused command background mein chalao</td></tr>
+      <tr><td>fg</td><td>Background command wapas lao</td></tr>
+      <tr><td>command &amp;</td><td>Command background mein chalao</td></tr>
+    </table>
+  </div>
+
+  <!-- Network -->
+  <div class="card c2">
+    <div class="card-header">
+      <span class="icon">🌐</span>
+      <h2>Network & Download</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>ping google.com</td><td>Internet check karo (Ctrl+C stop)</td></tr>
+      <tr><td>curl URL</td><td>URL ka content terminal mein dikhao</td></tr>
+      <tr><td>curl -O URL</td><td>File download karo</td></tr>
+      <tr><td>wget URL</td><td>File download karo (curl ka bhai)</td></tr>
+      <tr><td>ifconfig</td><td>Network info dekho</td></tr>
+      <tr><td>ip addr</td><td>IP address dekho</td></tr>
+      <tr><td>ssh user@ip</td><td>Remote machine pe login karo</td></tr>
+      <tr><td>scp file user@ip:/path</td><td>File remote machine pe bhejo</td></tr>
+    </table>
+  </div>
+
+  <!-- Text Editing -->
+  <div class="card c5">
+    <div class="card-header">
+      <span class="icon">✏️</span>
+      <h2>nano — Text Editor</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>nano file.txt</td><td>File editor mein kholو</td></tr>
+      <tr><td>Ctrl + O</td><td>File save karo</td></tr>
+      <tr><td>Enter</td><td>Save confirm karo</td></tr>
+      <tr><td>Ctrl + X</td><td>nano band karo</td></tr>
+      <tr><td>Ctrl + K</td><td>Poori line cut karo</td></tr>
+      <tr><td>Ctrl + W</td><td>File mein search karo</td></tr>
+      <tr><td>Ctrl + G</td><td>Help dekho</td></tr>
+      <tr><td>Alt + U</td><td>Undo karo</td></tr>
+    </table>
+  </div>
+
+  <!-- Shortcuts -->
+  <div class="card c4">
+    <div class="card-header">
+      <span class="icon">⌨️</span>
+      <h2>Terminal Shortcuts</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>Tab</td><td>Command ya file naam auto-complete karo</td></tr>
+      <tr><td>↑ Arrow</td><td>Pichla command wapas lao</td></tr>
+      <tr><td>Ctrl + C</td><td>Command rokو / cancel karo</td></tr>
+      <tr><td>Ctrl + L</td><td>Screen clear karo (clear jaisa)</td></tr>
+      <tr><td>Ctrl + A</td><td>Line ke shuru mein jao</td></tr>
+      <tr><td>Ctrl + E</td><td>Line ke aakhir mein jao</td></tr>
+      <tr><td>Ctrl + R</td><td>Pichle commands mein search karo</td></tr>
+      <tr><td>!!</td><td>Bilkul pichla command dobara chalao</td></tr>
+    </table>
+  </div>
+
+  <!-- Pipes & Redirection -->
+  <div class="card c6">
+    <div class="card-header">
+      <span class="icon">🔀</span>
+      <h2>Pipe & Redirect</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>cmd1 | cmd2</td><td>Pehle ka output doosre ko do</td></tr>
+      <tr><td>ls | grep .txt</td><td>Sirf .txt files dikhao</td></tr>
+      <tr><td>cmd &gt; file.txt</td><td>Output file mein save karo</td></tr>
+      <tr><td>cmd &gt;&gt; file.txt</td><td>Output file mein add karo (overwrite nahi)</td></tr>
+      <tr><td>cat README.md | less</td><td>README scroll karke padho</td></tr>
+      <tr><td>history | grep git</td><td>Sirf git wale commands dekho</td></tr>
+      <tr><td>echo "text"</td><td>Terminal mein kuch print karo</td></tr>
+      <tr><td>which git</td><td>git install kahan hai</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<div class="section-label">RISC-V Specific Commands</div>
+
+<div class="grid">
+
+  <div class="card c3">
+    <div class="card-header">
+      <span class="icon">🔬</span>
+      <h2>RISC-V Setup</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>sudo apt install iverilog</td><td>Verilog simulator install karo</td></tr>
+      <tr><td>sudo apt install gtkwave</td><td>Waveform viewer install karo</td></tr>
+      <tr><td>sudo apt install verilator</td><td>Fast Verilog simulator</td></tr>
+      <tr><td>sudo apt install gcc-riscv64-unknown-elf</td><td>RISC-V compiler install karo</td></tr>
+      <tr><td>git clone URL</td><td>RISC-V core GitHub se clone karo</td></tr>
+      <tr><td>cat README.md</td><td>Core ki instructions padho</td></tr>
+      <tr><td>make</td><td>Code build karo (Makefile se)</td></tr>
+      <tr><td>make sim</td><td>Simulation chalao</td></tr>
+    </table>
+  </div>
+
+  <div class="card c1">
+    <div class="card-header">
+      <span class="icon">🛠️</span>
+      <h2>Make Commands</h2>
+      <div class="dot"></div>
+    </div>
+    <table>
+      <tr><td>make</td><td>Default build karo</td></tr>
+      <tr><td>make all</td><td>Sab kuch build karo</td></tr>
+      <tr><td>make clean</td><td>Build files delete karo (fresh start)</td></tr>
+      <tr><td>make test</td><td>Tests chalao</td></tr>
+      <tr><td>make sim</td><td>Simulation run karo</td></tr>
+      <tr><td>make install</td><td>Program install karo</td></tr>
+      <tr><td>make -j4</td><td>4 cores use karke build karo (fast)</td></tr>
+      <tr><td>make help</td><td>Available targets dekho</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<footer>
+  <p>Banaya gaya PSS 2026 prep ke liye &nbsp;|&nbsp; <span>sudo</span> wisely use karo ⚡</p>
+</footer>
+
+</body>
+</html>
