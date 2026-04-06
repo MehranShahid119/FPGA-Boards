@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git + LFS Cheat Sheet — Mehran Shahid</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --bg2: #0f1219;
+    --bg3: #151a24;
+    --surface: #1a2030;
+    --border: #1e2a3a;
+    --accent: #00d4aa;
+    --accent2: #ff6b6b;
+    --accent3: #ffd93d;
+    --accent4: #6bcbff;
+    --text: #e4eaf4;
+    --muted: #6b7a9a;
+    --code-bg: #0d1117;
+    --green: #3ddc97;
+    --orange: #ff8c42;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID NOISE BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GLOW ORBS ── */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.15;
+  }
+  .orb1 { width: 600px; height: 600px; background: var(--accent); top: -200px; left: -200px; }
+  .orb2 { width: 400px; height: 400px; background: #5b6ef5; bottom: 20%; right: -100px; }
+  .orb3 { width: 300px; height: 300px; background: var(--accent3); top: 40%; left: 50%; }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0,212,170,0.1);
+    border: 1px solid rgba(0,212,170,0.3);
+    border-radius: 100px;
+    padding: 0.3rem 1rem;
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .header-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  h1 .highlight {
+    background: linear-gradient(135deg, var(--accent), var(--accent4));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .meta-item span { color: var(--text); }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,12,16,0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+  }
+
+  .tabs-inner {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .tabs-inner::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.2rem;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-icon { font-size: 0.9rem; }
+
+  /* ── SECTIONS ── */
+  .section {
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    margin-top: 0.3rem;
+    white-space: nowrap;
+  }
+
+  .section-title-wrap h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .section-title-wrap p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+
+  /* ── GRID CARDS ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .card:hover {
+    border-color: rgba(0,212,170,0.3);
+    transform: translateY(-2px);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.9rem 1.2rem;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-green { background: #3ddc97; }
+  .dot-yellow { background: #ffd93d; }
+  .dot-red { background: #ff6b6b; }
+  .dot-blue { background: #6bcbff; }
+  .dot-orange { background: #ff8c42; }
+
+  .card-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .card-body { padding: 1rem 1.2rem; }
+
+  /* ── CODE BLOCKS ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.8;
+    margin: 0.6rem 0;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+  }
+
+  .cmd { color: #79d5ff; }
+  .flag { color: #ffd93d; }
+  .arg { color: #c5a5f5; }
+  .comment { color: #4a5568; font-style: italic; }
+  .str { color: #3ddc97; }
+  .ok { color: #3ddc97; }
+  .err { color: #ff6b6b; }
+
+  /* ── INLINE CODE ── */
+  p code, li code {
+    background: rgba(0,212,170,0.08);
+    border: 1px solid rgba(0,212,170,0.15);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    color: var(--accent);
+    font-size: 0.82em;
+  }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  thead {
+    background: var(--bg3);
+  }
+
+  th {
+    padding: 0.8rem 1.2rem;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 0.75rem 1.2rem;
+    border-bottom: 1px solid rgba(30,42,58,0.5);
+    vertical-align: top;
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: rgba(0,212,170,0.03); }
+
+  .tag {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .tag-daily { background: rgba(61,220,151,0.15); color: #3ddc97; }
+  .tag-once { background: rgba(107,203,255,0.15); color: #6bcbff; }
+  .tag-before { background: rgba(255,141,42,0.15); color: #ff8c42; }
+  .tag-fix { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .callout-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+  .callout-tip {
+    background: rgba(0,212,170,0.07);
+    border: 1px solid rgba(0,212,170,0.2);
+    color: var(--text);
+  }
+
+  .callout-warn {
+    background: rgba(255,217,61,0.07);
+    border: 1px solid rgba(255,217,61,0.2);
+    color: var(--text);
+  }
+
+  .callout-err {
+    background: rgba(255,107,107,0.07);
+    border: 1px solid rgba(255,107,107,0.2);
+    color: var(--text);
+  }
+
+  /* ── MNEMONIC BOX ── */
+  .mnemonic {
+    background: linear-gradient(135deg, rgba(0,212,170,0.05), rgba(107,203,255,0.05));
+    border: 1px solid rgba(0,212,170,0.2);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin: 1.5rem 0;
+  }
+
+  .mnemonic-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .steps-row {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+
+  .step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    min-width: 120px;
+    position: relative;
+  }
+
+  .step-item:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .step-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent4));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #000;
+  }
+
+  .step-letter {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+  }
+
+  .step-cmd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* ── ONE-LINERS ── */
+  .oneliner {
+    margin-bottom: 1rem;
+  }
+
+  .oneliner-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .oneliner-label::before {
+    content: '✅';
+    font-size: 0.75rem;
+  }
+
+  /* ── PAT STEPS ── */
+  .pat-steps {
+    counter-reset: step;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .pat-steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+  }
+
+  .pat-steps li::before {
+    content: counter(step);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ── PRO TIPS ── */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .tip-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tip-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+
+  .tip-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: rgba(0,212,170,0.1);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .tip-text {
+    font-size: 0.875rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 3rem 0;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-inner {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+  }
+
+  .footer-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent4));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  .footer-sub {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .container { padding: 0 1rem; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .step-item:not(:last-child)::after { display: none; }
+    .steps-row { gap: 0.5rem; }
+    h1 { font-size: 2rem; }
+  }
+
+  /* ── COPY BUTTON ── */
+  .code-wrap { position: relative; }
+
+  .copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .copy-btn:hover { background: rgba(0,212,170,0.1); color: var(--accent); border-color: rgba(0,212,170,0.3); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="container">
+    <div class="header-badge">git + lfs reference guide</div>
+    <h1>
+      <span class="highlight">Git & LFS</span><br>
+      Ultimate Cheat Sheet
+    </h1>
+    <div class="header-meta">
+      <div class="meta-item">✍️ <span>Mehran Shahid</span></div>
+      <div class="meta-item">📅 <span>April 2026</span></div>
+      <div class="meta-item">🎯 <span>Quick Reference — Daily Use</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav-tabs">
+  <div class="tabs-inner">
+    <a href="#basic" class="tab-btn active"><span class="tab-icon">📦</span> Basic Git</a>
+    <a href="#lfs" class="tab-btn"><span class="tab-icon">🗄️</span> Git LFS</a>
+    <a href="#fix" class="tab-btn"><span class="tab-icon">🔧</span> Fix Commands</a>
+    <a href="#remote" class="tab-btn"><span class="tab-icon">🌐</span> Remote & Branch</a>
+    <a href="#debug" class="tab-btn"><span class="tab-icon">🔍</span> Debug</a>
+    <a href="#wsl" class="tab-btn"><span class="tab-icon">⚡</span> WSL2 Tips</a>
+    <a href="#mnemonic" class="tab-btn"><span class="tab-icon">🧠</span> Mnemonic</a>
+    <a href="#oneliners" class="tab-btn"><span class="tab-icon">🚀</span> One-Liners</a>
+    <a href="#pat" class="tab-btn"><span class="tab-icon">🔐</span> PAT</a>
+    <a href="#quickref" class="tab-btn"><span class="tab-icon">📎</span> Quick Ref</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- SECTION 1: BASIC GIT -->
+  <section class="section" id="basic">
+    <div class="section-header">
+      <div class="section-number">01</div>
+      <div class="section-title-wrap">
+        <h2>📦 Basic Git Workflow</h2>
+        <p>Daily use commands — har roz kaam aane wale commands</p>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-green"></span>
+          <span class="card-title">Stage & Commit</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Sab files stage karein</span>
+<span class="cmd">git</span> <span class="arg">add</span> .
+
+<span class="comment"># Specific file/folder stage karein</span>
+<span class="cmd">git</span> <span class="arg">add</span> <span class="str">path/to/file.txt</span>
+<span class="cmd">git</span> <span class="arg">add</span> <span class="str">src/</span>
+
+<span class="comment"># Commit with message</span>
+<span class="cmd">git</span> <span class="arg">commit</span> <span class="flag">-m</span> <span class="str">"feat: add new feature"</span>
+<span class="cmd">git</span> <span class="arg">commit</span> <span class="flag">-am</span> <span class="str">"fix: quick fix"</span>
+
+<span class="comment"># Status check ← sabse zaroori!</span>
+<span class="cmd">git</span> <span class="arg">status</span>
+<span class="cmd">git</span> <span class="arg">status</span> <span class="flag">--short</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-blue"></span>
+          <span class="card-title">Push & Pull</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Pehli baar push (upstream set karein)</span>
+<span class="cmd">git</span> <span class="arg">push</span> <span class="flag">-u</span> origin main
+<span class="cmd">git</span> <span class="arg">push</span> <span class="flag">-u</span> origin master
+
+<span class="comment"># Baad mein normal push</span>
+<span class="cmd">git</span> <span class="arg">push</span>
+
+<span class="comment"># Remote changes pull karein</span>
+<span class="cmd">git</span> <span class="arg">pull</span> origin main
+<span class="cmd">git</span> <span class="arg">pull</span> <span class="flag">--rebase</span> origin main
+
+<span class="comment"># Remote URL check/change</span>
+<span class="cmd">git</span> <span class="arg">remote</span> <span class="flag">-v</span>
+<span class="cmd">git</span> <span class="arg">remote</span> set-url origin <span class="str">https://github.com/user/repo.git</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: GIT LFS -->
+  <section class="section" id="lfs">
+    <div class="section-header">
+      <div class="section-number">02</div>
+      <div class="section-title-wrap">
+        <h2>🗄️ Git LFS Commands</h2>
+        <p>Large files (>50MB) ke liye — CSV, MAT, BIN, H5, PT, PTH, PDF, PNG, ZIP</p>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-yellow"></span>
+          <span class="card-title">Setup & Tracking</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># LFS initialize (sirf ek baar per machine)</span>
+<span class="cmd">git</span> lfs install
+
+<span class="comment"># Extensions ko LFS track karein</span>
+<span class="cmd">git</span> lfs track <span class="str">"*.csv" "*.mat" "*.bin"</span>
+<span class="cmd">git</span> lfs track <span class="str">"*.h5" "*.pt" "*.pth"</span>
+<span class="cmd">git</span> lfs track <span class="str">"*.pdf" "*.png" "*.zip"</span>
+
+<span class="comment"># Specific file track karein</span>
+<span class="cmd">git</span> lfs track <span class="str">"datasets/large_file.bin"</span>
+
+<span class="comment"># Track patterns dekhein</span>
+<span class="cmd">git</span> lfs track
+
+<span class="comment"># .gitattributes commit karein ⚠️ ZAROORI</span>
+<span class="cmd">git</span> add .gitattributes
+<span class="cmd">git</span> commit <span class="flag">-m</span> <span class="str">"chore: configure LFS tracking"</span></pre>
+          </div>
+          <div class="callout callout-warn">
+            <span class="callout-icon">⚠️</span>
+            <div><strong>.gitattributes</strong> hamesha commit karein — bina iske LFS rules doosre machines par apply nahi honge!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-green"></span>
+          <span class="card-title">Verification & Push</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Kaunsi files LFS ke under hain?</span>
+<span class="cmd">git</span> lfs ls-files
+
+<span class="comment"># Pending LFS uploads</span>
+<span class="cmd">git</span> lfs status
+
+<span class="comment"># LFS operation logs (debugging)</span>
+<span class="cmd">git</span> lfs logs last
+
+<span class="comment"># File type verify karein</span>
+<span class="cmd">file</span> path/to/large_file.bin
+<span class="ok"># ✅ LFS pointer: "ASCII text" + "version..."</span>
+<span class="err"># ❌ Normal Git: "data" ya actual file type</span>
+
+<span class="comment"># Push (LFS auto handle karega)</span>
+<span class="cmd">git</span> push
+
+<span class="comment"># LFS files alag se push</span>
+<span class="cmd">git</span> lfs push origin main
+
+<span class="comment"># Sab LFS objects verify</span>
+<span class="cmd">git</span> lfs fetch <span class="flag">--all</span>
+<span class="cmd">git</span> lfs checkout</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: FIX -->
+  <section class="section" id="fix">
+    <div class="section-header">
+      <div class="section-number">03</div>
+      <div class="section-title-wrap">
+        <h2>🔧 Fix Commands</h2>
+        <p>Jab cheezein galat ho jayen — recovery aur conversion commands</p>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-orange"></span>
+          <span class="card-title">File Already in Git → Convert to LFS</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Step 1: Sab files unstage karein</span>
+<span class="cmd">git</span> reset
+
+<span class="comment"># Step 2: Git cache se hatao (disk se DELETE nahi)</span>
+<span class="cmd">git</span> rm <span class="flag">--cached</span> path/to/large_file.bin
+
+<span class="comment"># Step 3: Dobara add (LFS intercept karega)</span>
+<span class="cmd">git</span> add path/to/large_file.bin
+
+<span class="comment"># Step 4: Verify karein</span>
+<span class="cmd">git</span> lfs ls-files | grep large_file</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-red"></span>
+          <span class="card-title">Wrong Extension / Stuck Process</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Wrong extension fix</span>
+<span class="cmd">git</span> lfs track <span class="str">"*.csv"</span>   <span class="comment"># sahi extension</span>
+<span class="cmd">git</span> add .gitattributes
+<span class="cmd">git</span> commit <span class="flag">-m</span> <span class="str">"fix: correct LFS pattern"</span>
+<span class="cmd">git</span> rm <span class="flag">--cached</span> *.csv
+<span class="cmd">git</span> add *.csv
+
+<span class="comment"># Git index lock delete karein</span>
+<span class="cmd">rm</span> <span class="flag">-f</span> .git/index.lock
+
+<span class="comment"># Corrupt index repair</span>
+<span class="cmd">git</span> update-index <span class="flag">--really-refresh</span>
+
+<span class="comment"># Force unlock (frozen terminal)</span>
+<span class="comment"># Ctrl + C dabayein, ya naya terminal</span></pre>
+          </div>
+          <div class="callout callout-err">
+            <span class="callout-icon">🛑</span>
+            <div><code>git rm --cached</code> sirf Git index se hata-ta hai — aapki actual file <strong>safe</strong> rehti hai disk par.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: REMOTE & BRANCH -->
+  <section class="section" id="remote">
+    <div class="section-header">
+      <div class="section-number">04</div>
+      <div class="section-title-wrap">
+        <h2>🌐 Remote & Branch Management</h2>
+        <p>Remote URLs, branches, aur switching repos</p>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-blue"></span>
+          <span class="card-title">Remote Operations</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Naya remote add karein</span>
+<span class="cmd">git</span> remote add origin <span class="str">https://github.com/user/repo.git</span>
+
+<span class="comment"># Remote URL change karein</span>
+<span class="cmd">git</span> remote set-url origin <span class="str">https://github.com/user/new-repo.git</span>
+
+<span class="comment"># Remote remove karein</span>
+<span class="cmd">git</span> remote remove origin
+
+<span class="comment"># Sab remotes dekhein</span>
+<span class="cmd">git</span> remote <span class="flag">-v</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-green"></span>
+          <span class="card-title">Branch Operations</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Current branch dekhein</span>
+<span class="cmd">git</span> branch
+
+<span class="comment"># Nayi branch banayein + switch</span>
+<span class="cmd">git</span> checkout <span class="flag">-b</span> feature/new-model
+
+<span class="comment"># Branch rename (master → main)</span>
+<span class="cmd">git</span> branch <span class="flag">-M</span> main
+
+<span class="comment"># Branch delete (local)</span>
+<span class="cmd">git</span> branch <span class="flag">-d</span> old-branch
+<span class="cmd">git</span> branch <span class="flag">-D</span> old-branch  <span class="comment"># force</span>
+
+<span class="comment"># Sab branches dekhein (local + remote)</span>
+<span class="cmd">git</span> branch <span class="flag">-a</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5: DEBUG -->
+  <section class="section" id="debug">
+    <div class="section-header">
+      <div class="section-number">05</div>
+      <div class="section-title-wrap">
+        <h2>🔍 Troubleshooting & Debugging</h2>
+        <p>Common errors aur diagnostic commands</p>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-bottom: 1.5rem;">
+      <table>
+        <thead>
+          <tr>
+            <th>Error</th>
+            <th>Solution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>file is X MB; exceeds 100 MB</code></td>
+            <td>File LFS mein nahi → <code>git lfs track "*.ext"</code> + <code>git add .gitattributes</code> + <code>git add &lt;file&gt;</code></td>
+          </tr>
+          <tr>
+            <td><code>fatal: Authentication failed</code></td>
+            <td>GitHub PAT use karein — normal password nahi chalta</td>
+          </tr>
+          <tr>
+            <td><code>remote: Repository not found</code></td>
+            <td>Repo URL check karein + access permissions verify karein</td>
+          </tr>
+          <tr>
+            <td><code>src refspec master does not match</code></td>
+            <td><code>git branch -a</code> se branch naam check karein, phir sahi se push</td>
+          </tr>
+          <tr>
+            <td><code>error: failed to push some refs</code></td>
+            <td>Pehle <code>git pull</code> karein ya <code>--force</code> carefully use karein</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-dot dot-yellow"></span>
+        <span class="card-title">Diagnostic Commands</span>
+      </div>
+      <div class="card-body">
+        <div class="code-wrap">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><span class="comment"># Large files dhoondhein (>100MB)</span>
+<span class="cmd">find</span> . <span class="flag">-type</span> f <span class="flag">-size</span> +100M <span class="flag">-exec</span> ls -lh {} \;
+
+<span class="comment"># Project total size</span>
+<span class="cmd">du</span> <span class="flag">-sh</span> .
+
+<span class="comment"># Git objects size check</span>
+<span class="cmd">git</span> count-objects <span class="flag">-vH</span>
+
+<span class="comment"># Last 5 commits dekhein</span>
+<span class="cmd">git</span> log <span class="flag">--oneline</span> -5
+
+<span class="comment"># Staged changes preview</span>
+<span class="cmd">git</span> diff <span class="flag">--cached --stat</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6: WSL2 -->
+  <section class="section" id="wsl">
+    <div class="section-header">
+      <div class="section-number">06</div>
+      <div class="section-title-wrap">
+        <h2>⚡ WSL2 Performance Tips</h2>
+        <p>Windows users ke liye — Git 5-10x faster banayein</p>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">🐢</span>
+      <div><strong>Problem:</strong> <code>/mnt/d/</code> par Git bohat slow hota hai — Windows filesystem cross-access ki wajah se.</div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-green"></span>
+          <span class="card-title">Solution: WSL Native Filesystem Use Karein</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Project WSL native filesystem mein move karein</span>
+<span class="cmd">cp</span> <span class="flag">-r</span> <span class="str">"/mnt/d/your/project"</span> ~/your-project/
+<span class="cmd">cd</span> ~/your-project/
+
+<span class="comment"># Ab Git commands 5-10x fast chalengi</span>
+<span class="cmd">git</span> add .
+<span class="cmd">git</span> commit <span class="flag">-m</span> <span class="str">"..."</span>
+<span class="cmd">git</span> push</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-blue"></span>
+          <span class="card-title">WSL Config Optimization</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># ~/.wslconfig (Windows user folder mein)</span>
+
+<span class="str">[wsl2]</span>
+<span class="arg">memory</span>=4GB
+<span class="arg">processors</span>=4
+<span class="arg">swap</span>=2GB
+<span class="arg">localhostForwarding</span>=true</pre>
+          </div>
+          <div class="callout callout-tip">
+            <span class="callout-icon">💡</span>
+            <div>Hamesha <code>~/</code> (WSL home) use karein, <code>/mnt/d/</code> se bachein performance ke liye.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7: MNEMONIC -->
+  <section class="section" id="mnemonic">
+    <div class="section-header">
+      <div class="section-number">07</div>
+      <div class="section-title-wrap">
+        <h2>🧠 Mnemonic Formula</h2>
+        <p>LFS workflow yaad rakhne ka asaan tarika</p>
+      </div>
+    </div>
+
+    <div class="mnemonic">
+      <div class="mnemonic-title">🎯 LFS WORKFLOW = T.A.V.P.U</div>
+      <div class="steps-row">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-letter">T</div>
+          <div class="step-cmd">Track<br>git lfs track "*.ext"</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-letter">A</div>
+          <div class="step-cmd">Attributes<br>add + commit .gitattributes</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-letter">V</div>
+          <div class="step-cmd">Verify<br>git lfs ls-files</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-letter">P</div>
+          <div class="step-cmd">Push<br>git push (LFS auto)</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-letter">U</div>
+          <div class="step-cmd">Update<br>regular add/commit/push</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 8: ONE-LINERS -->
+  <section class="section" id="oneliners">
+    <div class="section-header">
+      <div class="section-number">08</div>
+      <div class="section-title-wrap">
+        <h2>🚀 One-Liners</h2>
+        <p>Copy-paste ready — complete workflows ek line mein</p>
+      </div>
+    </div>
+
+    <div class="oneliner">
+      <div class="oneliner-label">Naye project mein LFS setup</div>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cmd">git</span> lfs install && <span class="cmd">git</span> lfs track <span class="str">"*.csv" "*.mat" "*.bin"</span> && <span class="cmd">git</span> add .gitattributes && <span class="cmd">git</span> commit <span class="flag">-m</span> <span class="str">"chore: setup LFS"</span></pre>
+      </div>
+    </div>
+
+    <div class="oneliner">
+      <div class="oneliner-label">Existing file ko LFS mein convert karein</div>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cmd">git</span> reset && <span class="cmd">git</span> rm <span class="flag">--cached</span> large_file.bin && <span class="cmd">git</span> add large_file.bin && <span class="cmd">git</span> lfs ls-files | grep large_file</pre>
+      </div>
+    </div>
+
+    <div class="oneliner">
+      <div class="oneliner-label">Remote change + push</div>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cmd">git</span> remote set-url origin <span class="str">https://github.com/user/repo.git</span> && <span class="cmd">git</span> push <span class="flag">-u</span> origin main</pre>
+      </div>
+    </div>
+
+    <div class="oneliner">
+      <div class="oneliner-label">Full workflow — naya project (LFS ke saath)</div>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cmd">git</span> init && <span class="cmd">git</span> lfs install && <span class="cmd">git</span> lfs track <span class="str">"*.bin"</span> && <span class="cmd">git</span> add .gitattributes && <span class="cmd">git</span> add . && <span class="cmd">git</span> commit <span class="flag">-m</span> <span class="str">"init"</span> && <span class="cmd">git</span> remote add origin &lt;URL&gt; && <span class="cmd">git</span> push <span class="flag">-u</span> origin main</pre>
+      </div>
+    </div>
+
+    <div class="oneliner">
+      <div class="oneliner-label">Bash alias — quick access shortcut</div>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="comment"># ~/.bashrc mein add karein</span>
+<span class="cmd">alias</span> gitcheat=<span class="str">'cat ~/git-lfs-cheatsheet.md'</span>
+<span class="cmd">alias</span> gitlfs=<span class="str">'git lfs'</span>
+<span class="cmd">source</span> ~/.bashrc</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 9: PAT -->
+  <section class="section" id="pat">
+    <div class="section-header">
+      <div class="section-number">09</div>
+      <div class="section-title-wrap">
+        <h2>🔐 GitHub Authentication</h2>
+        <p>Personal Access Token (PAT) — setup aur usage</p>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-yellow"></span>
+          <span class="card-title">PAT Banana — Step by Step</span>
+        </div>
+        <div class="card-body">
+          <ol class="pat-steps">
+            <li>GitHub → Settings → Developer settings</li>
+            <li>Personal access tokens → Tokens (classic)</li>
+            <li>Generate new token → Note: <code>"WSL-Git-LFS"</code></li>
+            <li>Scopes select karein: <code>repo</code>, <code>write:packages</code>, <code>delete:packages</code></li>
+            <li>Generate → Token copy karein <strong>(sirf ek baar dikhega!)</strong></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-dot dot-green"></span>
+          <span class="card-title">PAT Use Karna</span>
+        </div>
+        <div class="card-body">
+          <div class="code-wrap">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><span class="comment"># Jab bhi git push karein:</span>
+Username: <span class="str">your_github_username</span>
+Password: <span class="str">&lt;paste_your_PAT_here&gt;</span>
+<span class="err"># ❌ Normal password kaam nahi karega</span>
+<span class="ok"># ✅ PAT hi use karein</span></pre>
+          </div>
+          <div class="callout callout-tip">
+            <span class="callout-icon">🔒</span>
+            <div>Token ko secure jagah save karein — password manager ya encrypted note mein. <strong>GitHub par dubara nahi dikhega!</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 10: QUICK REF TABLE -->
+  <section class="section" id="quickref">
+    <div class="section-header">
+      <div class="section-number">10</div>
+      <div class="section-title-wrap">
+        <h2>📎 Quick Reference Table</h2>
+        <p>Har command ki frequency aur purpose — ek nazar mein</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>Purpose</th>
+            <th>Frequency</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>git status</code></td>
+            <td>Changes dekhein</td>
+            <td><span class="tag tag-daily">🔁 Daily</span></td>
+          </tr>
+          <tr>
+            <td><code>git add .</code></td>
+            <td>Stage all files</td>
+            <td><span class="tag tag-daily">🔁 Daily</span></td>
+          </tr>
+          <tr>
+            <td><code>git commit -m "msg"</code></td>
+            <td>Save changes locally</td>
+            <td><span class="tag tag-daily">🔁 Daily</span></td>
+          </tr>
+          <tr>
+            <td><code>git push</code></td>
+            <td>Upload to GitHub</td>
+            <td><span class="tag tag-daily">🔁 Daily</span></td>
+          </tr>
+          <tr>
+            <td><code>git lfs track "*.ext"</code></td>
+            <td>Large files configure karein</td>
+            <td><span class="tag tag-once">📅 One-time</span></td>
+          </tr>
+          <tr>
+            <td><code>git lfs ls-files</code></td>
+            <td>Verify LFS tracking</td>
+            <td><span class="tag tag-before">✅ Before Push</span></td>
+          </tr>
+          <tr>
+            <td><code>git remote -v</code></td>
+            <td>Check repo URL</td>
+            <td><span class="tag tag-before">🔍 When Switching</span></td>
+          </tr>
+          <tr>
+            <td><code>git reset</code></td>
+            <td>Unstage files</td>
+            <td><span class="tag tag-fix">🛠️ Fixing Mistakes</span></td>
+          </tr>
+          <tr>
+            <td><code>git lfs install</code></td>
+            <td>Initialize LFS on machine</td>
+            <td><span class="tag tag-once">📅 Once per Machine</span></td>
+          </tr>
+          <tr>
+            <td><code>git pull --rebase</code></td>
+            <td>Pull with clean history</td>
+            <td><span class="tag tag-daily">🔁 Daily</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PRO TIPS -->
+    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; font-family: 'Syne', sans-serif; font-size: 1.1rem; color: var(--accent); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">🎯 Pro Tips</h3>
+    <div class="tips-grid">
+      <div class="tip-card">
+        <div class="tip-num">01</div>
+        <div class="tip-text"><code>.gitattributes</code> hamesha commit karein — bina iske LFS rules doosre machines par apply nahi honge.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">02</div>
+        <div class="tip-text">Code files (<code>.py</code>, <code>.m</code>, <code>.js</code>) ko LFS mein na daalein — unhein normal Git mein rehne dein.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">03</div>
+        <div class="tip-text">Push se pehle <code>git lfs ls-files</code> zaroor check karein — large file track ho rahi hai ya nahi.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">04</div>
+        <div class="tip-text">WSL users: <code>/mnt/d/</code> drives se bach kar <code>~/</code> use karein performance ke liye — 5-10x speed up.</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">Git + LFS Cheat Sheet</div>
+      <div class="footer-sub">Made with ❤️ for Mehran Shahid · April 2026 · Happy Coding & Pushing! 🚀</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Copy button
+  function copyCode(btn) {
+    const pre = btn.nextElementSibling;
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 1800);
+    });
+  }
+
+  // Active tab highlight on scroll
+  const sections = document.querySelectorAll('.section');
+  const tabs = document.querySelectorAll('.tab-btn');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tabs.forEach(t => t.classList.remove('active'));
+        const active = document.querySelector(`.tab-btn[href="#${id}"]`);
+        if (active) {
+          active.classList.add('active');
+          active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }
+    });
+  }, { threshold: 0.4 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
